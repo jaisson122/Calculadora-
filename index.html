@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oliveira Empréstimos</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #e8f5e9;
+  margin: 0;
+}
+
+.header {
+  background: #2e7d32;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.container { padding: 15px; }
+
+.box {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+.btn-calcular { background:#1b5e20; color:white; }
+.btn-gerar { background:#2e7d32; color:white; }
+.btn-copiar { background:#66bb6a; color:white; }
+.btn-img { background:#0d47a1; color:white; }
+
+#resultado {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #1b5e20;
+}
+
+#saida {
+  white-space: pre-line;
+  background: #f1f8f4;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.erro {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* COMPROVANTE VISUAL */
+#comprovante {
+  background: #ffffff;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 10px;
+  border: 2px solid #2e7d32;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">Oliveira Empréstimos</div>
+
+<div class="container">
+<div class="box">
+
+<div id="erro" class="erro"></div>
+
+<input type="text" id="cliente" placeholder="Nome completo">
+<input type="text" id="telefone" placeholder="Telefone com DDD">
+<input type="text" id="cpf" placeholder="CPF">
+<input type="number" id="valor" placeholder="Valor desejado (R$)">
+
+<div>
+  <div style="color:#2e7d32; font-weight:bold;">
+    ⬇️ Data de pagamento (máx. 30 dias)
+  </div>
+  <input type="date" id="data">
+</div>
+
+<button class="btn-calcular" onclick="calcular()">Calcular</button>
+<div id="resultado"></div>
+
+<button class="btn-gerar" onclick="gerar()">Gerar Proposta</button>
+<button class="btn-img" onclick="Tirar print e enviar no whatsapp()">TIRAR PRINT E ENVIAR NO WHATSAPP</button>
+
+<div id="saida"></div>
+
+<!-- COMPROVANTE -->
+<div id="comprovante" style="display:none;"></div>
+
+</div>
+</div>
+
+<script>
+let valorFinal = 0;
+let dias = 0;
+let jurosFinal = 0;
+
+function validarCPF(cpf){
+  cpf = cpf.replace(/\D/g,'');
+  if(cpf.length!=11) return false;
+  if(/^(\d)\1+$/.test(cpf)) return false;
+
+  let soma=0, resto;
+  for(let i=1;i<=9;i++) soma+=parseInt(cpf[i-1])*(11-i);
+  resto=(soma*10)%11; if(resto>=10) resto=0;
+  if(resto!=cpf[9]) return false;
+
+  soma=0;
+  for(let i=1;i<=10;i++) soma+=parseInt(cpf[i-1])*(12-i);
+  resto=(soma*10)%11; if(resto>=10) resto=0;
+  if(resto!=cpf[10]) return false;
+
+  return true;
+}
+
+function validarTelefone(t){
+  t=t.replace(/\D/g,'');
+  return t.length>=10 && t.length<=11;
+}
+
+function validarNome(n){
+  n=n.trim().toLowerCase();
+  let p=n.split(" ").filter(x=>x);
+  if(p.length<2) return false;
+  if(n.replace(/\s/g,"").length<10) return false;
+  if(p[0]===p[1]) return false;
+  if(/^(teste|aaa|abc|xxx|123)/.test(n)) return false;
+  return true;
+}
+
+function calcular(){
+  let valor=parseFloat(document.getElementById("valor").value);
+  let data=document.getElementById("data").value;
+
+  if(!valor||!data) return alert("Preencha valor e data!");
+
+  let hoje=new Date();
+  let dataPag=new Date(data);
+
+  dias=Math.ceil((dataPag-hoje)/(1000*60*60*24));
+
+  if(dias<=0) return alert("Data inválida!");
+  if(dias>30) return alert("Máx. 30 dias!");
+
+  let juros=valor*(0.01*dias);
+  if(juros<50) juros=50;
+
+  jurosFinal=juros;
+  valorFinal=valor+juros;
+
+  document.getElementById("resultado").innerText =
+    `Total: R$ ${valorFinal.toFixed(2)} | ${dias} dias`;
+}
+
+function gerar(){
+  let nome=document.getElementById("cliente").value;
+  let tel=document.getElementById("telefone").value;
+  let cpf=document.getElementById("cpf").value;
+  let valor=document.getElementById("valor").value;
+  let data=document.getElementById("data").value;
+  let erro=document.getElementById("erro");
+
+  if(!validarNome(nome)) return erro.innerText="Nome inválido!";
+  if(!validarTelefone(tel)) return erro.innerText="Telefone inválido!";
+  if(!validarCPF(cpf)) return erro.innerText="CPF inválido!";
+  if(!valorFinal) return erro.innerText="Calcule primeiro!";
+
+  erro.innerText="";
+
+  let texto = `
+📄 SOLICITAÇÃO DE CRÉDITO
+
+Nome: ${nome}
+Telefone: ${tel}
+CPF: ${cpf}
+
+Valor: R$ ${valor}
+Total a pagar: R$ ${valorFinal.toFixed(2)}
+Prazo: ${dias} dias
+
+Juros: R$ ${jurosFinal.toFixed(2)}
+`;
+
+  document.getElementById("saida").innerText = texto;
+
+  document.getElementById("comprovante").innerHTML = `
+    <h3 style="text-align:center;">OLIVEIRA EMPRÉSTIMOS</h3>
+    <hr>
+    <p><b>Cliente:</b> ${nome}</p>
+    <p><b>CPF:</b> ${cpf}</p>
+    <p><b>Telefone:</b> ${tel}</p>
+    <hr>
+    <p><b>Valor solicitado:</b> R$ ${valor}</p>
+    <p><b>Total a pagar:</b> R$ ${valorFinal.toFixed(2)}</p>
+    <p><b>Prazo:</b> ${dias} dias</p>
+    <p><b>Juros:</b> R$ ${jurosFinal.toFixed(2)}</p>
+  `;
+
+  document.getElementById("comprovante").style.display="block";
+}
+
+function gerarImagem(){
+  let comp = document.getElementById("comprovante");
+
+  if(comp.style.display === "none"){
+    alert("Gere a proposta primeiro!");
+    return;
+  }
+
+  html2canvas(comp).then(canvas => {
+    let link = document.createElement("a");
+    link.download = "comprovante.png";
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+</script>
+
+</body>
+</html>
