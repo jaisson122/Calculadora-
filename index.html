@@ -52,7 +52,6 @@ button {
 
 .btn-calcular { background:#1b5e20; color:white; }
 .btn-gerar { background:#2e7d32; color:white; }
-.btn-copiar { background:#66bb6a; color:white; }
 .btn-img { background:#0d47a1; color:white; }
 
 #resultado {
@@ -76,7 +75,6 @@ button {
   margin-bottom: 10px;
 }
 
-/* COMPROVANTE VISUAL */
 #comprovante {
   background: #ffffff;
   padding: 20px;
@@ -112,11 +110,10 @@ button {
 <div id="resultado"></div>
 
 <button class="btn-gerar" onclick="gerar()">Gerar Proposta</button>
-<button class="btn-img" onclick="Tirar print e enviar no whatsapp()">TIRAR PRINT E ENVIAR NO WHATSAPP</button>
+<button class="btn-img" onclick="gerarImagem()">Gerar Imagem</button>
 
 <div id="saida"></div>
 
-<!-- COMPROVANTE -->
 <div id="comprovante" style="display:none;"></div>
 
 </div>
@@ -127,6 +124,7 @@ let valorFinal = 0;
 let dias = 0;
 let jurosFinal = 0;
 
+// CPF
 function validarCPF(cpf){
   cpf = cpf.replace(/\D/g,'');
   if(cpf.length!=11) return false;
@@ -145,11 +143,13 @@ function validarCPF(cpf){
   return true;
 }
 
+// TELEFONE
 function validarTelefone(t){
   t=t.replace(/\D/g,'');
   return t.length>=10 && t.length<=11;
 }
 
+// NOME
 function validarNome(n){
   n=n.trim().toLowerCase();
   let p=n.split(" ").filter(x=>x);
@@ -160,30 +160,44 @@ function validarNome(n){
   return true;
 }
 
+// CALCULAR
 function calcular(){
   let valor=parseFloat(document.getElementById("valor").value);
   let data=document.getElementById("data").value;
 
-  if(!valor||!data) return alert("Preencha valor e data!");
+  if(!valor || !data){
+    alert("Preencha valor e data!");
+    return;
+  }
 
   let hoje=new Date();
   let dataPag=new Date(data);
 
   dias=Math.ceil((dataPag-hoje)/(1000*60*60*24));
 
-  if(dias<=0) return alert("Data inválida!");
-  if(dias>30) return alert("Máx. 30 dias!");
+  if(dias<=0){
+    alert("Data inválida!");
+    return;
+  }
+
+  if(dias>30){
+    alert("Máximo de 30 dias permitido!");
+    return;
+  }
 
   let juros=valor*(0.01*dias);
-  if(juros<50) juros=50;
+  if(juros<50){
+    juros=50;
+  }
 
   jurosFinal=juros;
   valorFinal=valor+juros;
 
   document.getElementById("resultado").innerText =
-    `Total: R$ ${valorFinal.toFixed(2)} | ${dias} dias`;
+    `Total: R$ ${valorFinal.toFixed(2)} | Juros: R$ ${jurosFinal.toFixed(2)} | ${dias} dias`;
 }
 
+// GERAR
 function gerar(){
   let nome=document.getElementById("cliente").value;
   let tel=document.getElementById("telefone").value;
@@ -195,7 +209,7 @@ function gerar(){
   if(!validarNome(nome)) return erro.innerText="Nome inválido!";
   if(!validarTelefone(tel)) return erro.innerText="Telefone inválido!";
   if(!validarCPF(cpf)) return erro.innerText="CPF inválido!";
-  if(!valorFinal) return erro.innerText="Calcule primeiro!";
+  if(!valorFinal) return erro.innerText="Clique em calcular primeiro!";
 
   erro.innerText="";
 
@@ -206,9 +220,10 @@ Nome: ${nome}
 Telefone: ${tel}
 CPF: ${cpf}
 
-Valor: R$ ${valor}
-Total a pagar: R$ ${valorFinal.toFixed(2)}
+Valor solicitado: R$ ${valor}
+Valor total a pagar: R$ ${valorFinal.toFixed(2)}
 Prazo: ${dias} dias
+Data de pagamento: ${data}
 
 Juros: R$ ${jurosFinal.toFixed(2)}
 `;
@@ -225,12 +240,14 @@ Juros: R$ ${jurosFinal.toFixed(2)}
     <p><b>Valor solicitado:</b> R$ ${valor}</p>
     <p><b>Total a pagar:</b> R$ ${valorFinal.toFixed(2)}</p>
     <p><b>Prazo:</b> ${dias} dias</p>
+    <p><b>Data de pagamento:</b> ${data}</p>
     <p><b>Juros:</b> R$ ${jurosFinal.toFixed(2)}</p>
   `;
 
   document.getElementById("comprovante").style.display="block";
 }
 
+// IMAGEM
 function gerarImagem(){
   let comp = document.getElementById("comprovante");
 
